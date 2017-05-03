@@ -19,8 +19,8 @@ library.
 Building
 --------
 
-The 'Makefile' includes two targets: 'old' and 'new'.
-To recreate the problem run 'make old' and then './qctest.byte'
+The `Makefile` includes two targets: `old` and `new`.
+To recreate the problem run 'make old' and then `./qctest.byte`
 This should illustrate the issue:
 
     random seed: 413762386
@@ -38,5 +38,5 @@ This should illustrate the issue:
     failure (1 tests failed, ran 7 tests)
 
 
-To confirm that the issue has been fixed, run 'make new' and
-'./qctest.byte' again.
+To confirm that the issue has been fixed, run `make new` and
+`./qctest.byte` again.
