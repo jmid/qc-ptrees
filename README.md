@@ -2,7 +2,7 @@ A QuickCheck model-based test of ptrees (Patricia trees)
 ========================================================
 
 This is an example of building a model-based QuickCheck testsuite with
-OCaml's QCheck library.
+OCaml's [QCheck](https://github.com/c-cube/qcheck/) library.
 
 It tests whether the Patricia tree implementation 'ptrees' agrees with
 a simple model (read: an abstract specification or semantics) of sets,
@@ -13,7 +13,9 @@ inherited from Okasaki and Gill's paper "Fast mergable integer maps"
 (ML'98).
 
 To recreate the bug the directory 'ptrees' contains an old copy of the
-library.
+library. Note that 'ptrees' has since been split into separate libraries:
+  - ['ptset'](https://github.com/backtracking/ptset) implementing integer sets and
+  - ['ptmap'](https://github.com/backtracking/ptmap) implementing integer valued maps.
 
 
 Building
@@ -39,4 +41,4 @@ This should illustrate the issue:
 
 
 To confirm that the issue has been fixed, run `make new` and
-`./qctest.byte` again.
+`./qctest.byte` again. This will instead test the newer 'ptset' submodule.
