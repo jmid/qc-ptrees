@@ -1,0 +1,9 @@
+#directory "_build";;
+#use "topfind";;
+#require "qcheck";;
+#load "qctest.cma";;
+open QCheck;;
+open Qctest;;
+(* load the Ptset module *)
+#directory "_build/ptrees";;
+#load "ptset.cmo";;
