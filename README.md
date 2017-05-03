@@ -14,7 +14,7 @@ inherited from Okasaki and Gill's paper ["Fast mergable integer maps"](http://it
 To recreate the bug the directory 'ptrees' contains an old copy of the
 library. Note that 'ptrees' has since been split into separate libraries:
   - ['ptset'](https://github.com/backtracking/ptset) implementing integer sets and
-  - ['ptmap'](https://github.com/backtracking/ptmap) implementing integer valued maps.
+  - ['ptmap'](https://github.com/backtracking/ptmap) implementing maps with integer keys.
 
 
 Building
@@ -40,4 +40,5 @@ This should illustrate the issue:
 
 
 To confirm that the issue has been fixed, run `make new` and
-`./qctest.byte` again. This will instead test the newer 'ptset' submodule.
+`./qctest.byte` again. This will instead test the newer (patched)
+'ptset' submodule against the model.
