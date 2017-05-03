@@ -20,7 +20,7 @@ Building
 --------
 
 The `Makefile` includes two targets: `old` and `new`.
-To recreate the problem run 'make old' and then `./qctest.byte`
+To recreate the problem run `make old` and then `./qctest.byte`
 This should illustrate the issue:
 
     random seed: 413762386
