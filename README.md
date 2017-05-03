@@ -1,3 +1,6 @@
+A QuickCheck model-based test of ptrees (Patricia trees)
+========================================================
+
 This is an example of building a model-based QuickCheck testsuite with
 OCaml's QCheck library.
 
