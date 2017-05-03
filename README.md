@@ -9,8 +9,7 @@ a simple model (read: an abstract specification or semantics) of sets,
 represented as sorted lists. Interestingly it doesn't.
 
 It turns out to be a problem due to signed integer comparison
-inherited from Okasaki and Gill's paper "Fast mergable integer maps"
-(ML'98).
+inherited from Okasaki and Gill's paper ["Fast mergable integer maps"](http://ittc.ku.edu/~andygill/papers/IntMap98.pdf) (ML'98).
 
 To recreate the bug the directory 'ptrees' contains an old copy of the
 library. Note that 'ptrees' has since been split into separate libraries:
