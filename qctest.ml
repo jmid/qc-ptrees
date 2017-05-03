@@ -2,22 +2,7 @@ open QCheck
 
 let test_count = 2_500
   
-(* different integer generators  *)
-
-let intgen = frequency
-              [(8,int);
-	       (1, int_range (-1000) 1000);
-	       (1, oneofl [min_int;-1;0;1;max_int])]
- 
-(* sign * pow(2, k) +/- 3 *)
-let jespergen =
-  make ~print:Print.int ~shrink:Shrink.int
-    (Gen.map3
-       (fun sign expo addition ->
-	 let n = 1 lsl expo in
-	 let n = if sign then -n else n in
-	 if addition then n+3 else n-3)
-       Gen.bool (Gen.int_range 60 63) Gen.bool) (*Force to large numbers *)
+(* An integer generator  *)
 
 let arb_int =
   frequency
@@ -115,20 +100,13 @@ let rec tshrink t = match t with
     <+> (Iter.map (fun t1' -> Inter (t0,t1')) (tshrink t1))
 
 (*  arb_tree : instr_tree arbitrary *)
-let (>>=) = Gen.(>>=)
 let arb_tree =
   make ~print:to_string ~shrink:tshrink
  (* (tree_gen Gen.int) *)
     (tree_gen arb_int.gen)
-(*  (fun rs ->
-      tree_gen (let is = Gen.generate ~rand:rs ~n:5 arb_int.gen in
-		Gen.oneof [Gen.oneofl is; arb_int.gen]) rs) *)
-    (* the following will generate the same list upfront before all tests:
-    (tree_gen (let is = Gen.generate 5 arb_int.gen in
-		Gen.oneof [Gen.oneofl is; arb_int.gen])) *)
-    (* was: (tree_gen arb_int.gen) *)
-(*    (Gen.generate oneof [tree_gen arb_int;])   *)
-						
+
+
+(* The model (suffixed with _m) *)
 
 let empty_m = []
 let singleton_m i = [i]
@@ -141,10 +119,12 @@ let union_m s s' = ((*(),*) List.sort_uniq compare (s@s'))
 let rec inter_m s s' = match s with
   | [] -> []
   | e::s -> if List.mem e s' then e::(inter_m s s') else inter_m s s'
-let elements_m s = s
 
 (*let abstract s = Ptset.elements s*)
 let abstract s = List.sort Pervasives.compare (Ptset.fold (fun i a -> i::a) s [])
+
+
+(* A bunch of agreement properties *)
 
 let test_empty =
   Test.make ~name:"empty" ~count:1
@@ -171,14 +151,14 @@ let add_test =
     (pair arb_tree arb_int)
     (fun (t,n) ->
       let s = interpret t in
-      abstract (Ptset.add n s) = add_m (n(*+1*)) (abstract s))
+      abstract (Ptset.add n s) = add_m n (abstract s))
 
 let remove_test =
   Test.make ~name:"remove test" ~count:test_count
     (pair arb_tree arb_int)
     (fun (t,n) ->
       let s = interpret t in
-      abstract (Ptset.remove n s) = remove_m (n(*+1*)) (abstract s))
+      abstract (Ptset.remove n s) = remove_m n (abstract s))
    
 let union_test =
   Test.make ~name:"union test" ~count:test_count
@@ -196,16 +176,6 @@ let inter_test =
       let s' = interpret t' in
       abstract (Ptset.inter s s') = inter_m (abstract s) (abstract s'))
 
-(* This will just test the identity fun. applied to interp t *)
-(*
-let elements_test =
-  Test.make ~name:"elements test" ~count:test_count
-    arb_tree
-    (fun t ->
-      let s  = interpret t in
-      Ptset.elements s = elements_m (abstract s))
-*)
-    
 ;;
   QCheck_runner.run_tests(*_main*) ~verbose:true
     [ test_empty;
@@ -215,18 +185,4 @@ let elements_test =
       remove_test;
       union_test;
       inter_test;
-   (* elements_test; *)
     ]
-(*
-;;    
-let ls =
-  Ptset.elements
-    (Ptset.union
-       (Ptset.add (-4611686018427387904) (Ptset.singleton 0))
-       (Ptset.add (-4611686018427387904) (Ptset.singleton 1))) in
- print_endline (Print.list string_of_int ls)
-*)
-(*
-;;
-print_endline (to_string (Gen.generate1 arb_tree.gen))
-*)
