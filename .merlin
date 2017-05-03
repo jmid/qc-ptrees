@@ -5,4 +5,4 @@ S .
 B _build
 
 # package path
-PKG qcheck kaputt ptset
+PKG qcheck ptset
