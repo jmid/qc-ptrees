@@ -2,20 +2,11 @@ open QCheck
 
 let test_count = 2_500
   
-(* An integer generator  *)
-
-let arb_int =
-  frequency
-    [(5,small_int);
-     (3,int);
-     (1, oneofl [min_int;max_int])]
-
 (* A data type for symbolically representing calls to the Ptset API *)
 type instr_tree =
   | Empty
   | Singleton of int
   | Add of int * instr_tree
-(*  | Mem of int * instr_tree  *)
   | Remove of int * instr_tree
   | Union of instr_tree * instr_tree
   | Inter of instr_tree * instr_tree
@@ -28,7 +19,6 @@ let rec to_string a =
   | Empty -> "Empty"
   | Singleton n -> "Singleton " ^ (int_to_string n)
   | Add (n,t) -> "Add (" ^ (int_to_string n) ^ ", " ^ (to_string t) ^ ")"
-(*  | Mem (n,t) -> "Mem (" ^ (int_to_string n) ^ ", " ^ (to_string t) ^ ")"  *)
   | Remove (n,t) -> "Remove (" ^ (int_to_string n) ^ ", " ^ (to_string t) ^ ")"
   | Union (t,t') -> "Union (" ^ (to_string t) ^ ", " ^ (to_string t') ^ ")"
   | Inter (t,t') -> "Inter (" ^ (to_string t) ^ ", " ^ (to_string t') ^ ")"
@@ -38,10 +28,6 @@ let rec interpret t = match t with
   | Empty        -> Ptset.empty
   | Singleton n  -> Ptset.singleton n
   | Add (n,t)    -> Ptset.add n (interpret t)
-(*  | Mem (n,t)    ->
-    let s = interpret t in
-    let _ = Ptset.mem n s in
-    s  *)
   | Remove (n,t) -> Ptset.remove n (interpret t)
   | Union (t,t') ->
     let s  = interpret t in
@@ -53,9 +39,9 @@ let rec interpret t = match t with
     Ptset.inter s s'
 
 
-(* A recursive (size-bounded) generator of trees *)
+(** A recursive (size-bounded) generator of trees *)
 
-(*  tree_gen : instr_tree Gen.t  *)
+(*  tree_gen : int Gen.t -> instr_tree Gen.t  *)
 let tree_gen int_gen =
   Gen.sized
     (Gen.fix (fun recgen n -> match n with
@@ -63,16 +49,16 @@ let tree_gen int_gen =
 			Gen.map (fun i -> Singleton i) int_gen]
       | _ ->
 	Gen.frequency
-	  ([ (1, Gen.return Empty);
-	     (1, Gen.map (fun i -> Singleton i) int_gen);
-	     (2, Gen.map2 (fun i t -> Add (i,t)) int_gen (recgen (n-1)));
-          (* (2, Gen.map2 (fun i t -> Mem (i,t)) int_gen (recgen (n-1))); *)
-	     (2, Gen.map2 (fun i t -> Remove (i,t)) int_gen (recgen (n-1)));
-	     (2, Gen.map2 (fun l r -> Union (l,r)) (recgen (n/2)) (recgen (n/2)));
-	     (2, Gen.map2 (fun l r -> Inter (l,r)) (recgen (n/2)) (recgen (n/2)));
-	   ] )))
+	  [ (1, Gen.return Empty);
+	    (1, Gen.map (fun i -> Singleton i) int_gen);
+	    (2, Gen.map2 (fun i t -> Add (i,t)) int_gen (recgen (n-1)));
+	    (2, Gen.map2 (fun i t -> Remove (i,t)) int_gen (recgen (n-1)));
+	    (2, Gen.map2 (fun l r -> Union (l,r)) (recgen (n/2)) (recgen (n/2)));
+	    (2, Gen.map2 (fun l r -> Inter (l,r)) (recgen (n/2)) (recgen (n/2)));
+	  ]))
 
 let (<+>) = Iter.(<+>)
+(*  tshrink : instr_tree -> instr_tree Iter.t  *)
 let rec tshrink t = match t with
   | Empty -> Iter.empty
   | Singleton i ->
@@ -82,10 +68,6 @@ let rec tshrink t = match t with
     (Iter.of_list [Empty; t; Singleton i])
     <+> (Iter.map (fun t' -> Add (i,t')) (tshrink t))
     <+> (Iter.map (fun i' -> Add (i',t)) (Shrink.int i))
-(*  | Mem (i,t) ->
-    (Iter.of_list [Empty; t])
-    <+> (Iter.map (fun t' -> Mem (i,t')) (tshrink t))
-    <+> (Iter.map (fun i' -> Mem (i',t)) (Shrink.int i))  *)
   | Remove (i,t) ->
     (Iter.of_list [Empty; t])
     <+> (Iter.map (fun t' -> Remove (i,t')) (tshrink t))
@@ -99,32 +81,45 @@ let rec tshrink t = match t with
     <+> (Iter.map (fun t0' -> Inter (t0',t1)) (tshrink t0))
     <+> (Iter.map (fun t1' -> Inter (t0,t1')) (tshrink t1))
 
+(* An integer generator  *)
+let arb_int =
+  frequency
+    [(5,small_signed_int);
+     (3,int);
+     (1, oneofl [min_int;max_int])]
+
 (*  arb_tree : instr_tree arbitrary *)
 let arb_tree =
   make ~print:to_string ~shrink:tshrink
  (* (tree_gen Gen.int) *)
+ (* (tree_gen Gen.small_signed_int) *)
     (tree_gen arb_int.gen)
 
 
-(* The model (suffixed with _m) *)
+(** The model (identifiers are suffixed with _m) *)
 
 let empty_m = []
 let singleton_m i = [i]
 let mem_m i s = List.mem i s
-let add_m i s = List.sort_uniq compare (i::s)
+let add_m i s = if List.mem i s then s else List.sort compare (i::s)
 let rec remove_m i s = match s with
   | [] -> []
   | j::s' -> if i=j then s' else j::(remove_m i s')
-let union_m s s' = ((*(),*) List.sort_uniq compare (s@s'))
+let rec union_m s s' = match s,s' with
+  | [], _ -> s'
+  | _, [] -> s
+  | i::is,j::js -> if i<j then i::(union_m is s') else
+                     if i>j then j::(union_m s js) else
+		       i::(union_m is js)
 let rec inter_m s s' = match s with
   | [] -> []
   | e::s -> if List.mem e s' then e::(inter_m s s') else inter_m s s'
 
 (*let abstract s = Ptset.elements s*)
-let abstract s = List.sort Pervasives.compare (Ptset.fold (fun i a -> i::a) s [])
+let abstract s = List.sort compare (Ptset.fold (fun i a -> i::a) s [])
 
 
-(* A bunch of agreement properties *)
+(** A bunch of agreement properties *)
 
 let test_empty =
   Test.make ~name:"empty" ~count:1
