@@ -1,6 +1,6 @@
 open QCheck
 
-let test_count = 2_500
+let test_count = 10_000
   
 (* A data type for symbolically representing calls to the Ptset API *)
 type instr_tree =
