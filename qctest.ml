@@ -87,12 +87,12 @@ let arb_int =
     [(5,small_signed_int);
      (3,int);
      (1, oneofl [min_int;max_int])]
+ (* int *)
+ (* small_signed_int *)
 
 (*  arb_tree : instr_tree arbitrary *)
 let arb_tree =
   make ~print:to_string ~shrink:tshrink
- (* (tree_gen Gen.int) *)
- (* (tree_gen Gen.small_signed_int) *)
     (tree_gen arb_int.gen)
 
 
