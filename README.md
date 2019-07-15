@@ -11,7 +11,7 @@ represented as sorted lists. Interestingly it doesn't.
 It turns out to be a problem due to signed integer comparison
 inherited from Okasaki and Gill's paper ["Fast mergable integer maps"](http://ittc.ku.edu/~andygill/papers/IntMap98.pdf) (ML'98).
 
-For full details please see my paper draft ["QuickChecking Patricia Trees"](http://janmidtgaard.dk/papers/Midtgaard%3a17.pdf).
+For full details please see my TFP paper ["QuickChecking Patricia Trees"](http://janmidtgaard.dk/papers/Midtgaard%3aTFP17.pdf).
 
 To recreate the bug the directory 'ptrees' contains an old copy of the
 library. Note that 'ptrees' has since been split into separate libraries:
